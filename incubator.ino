@@ -11,7 +11,7 @@
 // stty -F /dev/ttyACM0 115200 cs8 cread clocal -hupcl time 30 && tee incubator.log </dev/ttyACM0
 
 #define WDT_TIMEOUT WDTO_8S
-#define SERIAL_LOGGING
+//#define SERIAL_LOGGING
 #define DHTPIN 3
 //#define ONE_WIRE 3
 #define T_OFFSET 0.9
@@ -148,7 +148,7 @@ unsigned long t0, Hon, talarm;
 byte c, displayMode;
 byte key, bri = 255, alarm;
 
-void setup(void) {
+void setup() {
 #if defined(WDT_TIMEOUT)
   wdt_enable(WDT_TIMEOUT);
 #endif
@@ -182,7 +182,7 @@ void setup(void) {
 }
 
 
-void loop(void) {
+void loop() {
   unsigned long t1 = millis();
   int dt = t1 - t0;
 
@@ -192,21 +192,29 @@ void loop(void) {
   if (key)
     analogWrite(BRIGHTNESS, bri = 255);
 
-  if (t1 - Hon > Hpower * DELAY)
+  if (t1 - Hon > Hpower * DELAY) {
     heater(0);
+  }
 
-  if (Hcontrol && Hcontrol < H_AUTO_COUNT)
+  if (Hcontrol && Hcontrol < H_AUTO_COUNT) {
     vent.refresh();
+  }
 
   if (dt > DELAY || key) {
     //    beep(2000, 50);
     float T = dht.readTemperature() + T_OFFSET;
     float H = dht.readHumidity();
 
-    if (isnan(T) || T < 10 || T > 100 || isnan(H) || H < 10 || H > 95) {
+    if (isnan(T) || T < 10 || T > 60 || isnan(H) || H < 5 || H > 95) {
       heater(0);
       lcd.clear();
-      lcd.print("SENSOR ERROR");
+      lcd.print("SENSOR ERROR!");
+      lcd.setCursor(0, 1);
+      lcd.print("T=");
+      lcd.print(T);
+      lcd.print("C H=");
+      lcd.print(H, 1);
+      lcd.print("%");
       beep(2000, 1000);
       return;
     }
@@ -234,6 +242,7 @@ void loop(void) {
     if (abs(EH) > HI_RESET)
       IEHdt = 0;
     float pidH = 0.1176 * (EH + 0.09091 * IEHdt + 2.75 * dEHdt);
+//    pidH = max(0, min(1, round(pidH * 10) / 10.0)); // discretize with Hsteps step to avoid mini adjustmnts
     vent.write(pidH * 180);
     if (Hcontrol > 1) {
       if (abs(EH) > H_AUTO_THRES) {
@@ -289,8 +298,8 @@ void loop(void) {
         lcd.print("%");
         break;
       case 1: // temperature setpoint
-        if (key & (UP | DOWN)) {
-          Ts = max(20, min(50, Ts + (key & UP ? +1 : -1) * 0.1));
+        if (key & (UP | DOWN | LEFT | RIGHT)) {
+          Ts = max(20, min(50, Ts + (key & (UP | RIGHT) ? +1 : -1) * (key & (UP | DOWN) ? 0.1 : 1)));
           Ts_changed = 10;
         }
         lcd.print("Ts=");
@@ -303,14 +312,18 @@ void loop(void) {
           Hs_changed = 10;
         }
         if (key & RIGHT) {
-          Hcontrol = ++Hcontrol % 3;
+          if (Hcontrol < 2) {
+            Hcontrol = ++Hcontrol;
+          } else {
+            Hcontrol = 0;
+          }
           IEHdt = 0;
           write_byte(HC_ADDR, Hcontrol);
         }
         lcd.print("Hs=");
         lcd.print(Hs);
         lcd.print("% ");
-        lcd.print(Hcontrol == 1 ? "on" : Hcontrol > 1 ? "auto" : "off");
+        lcd.print(Hcontrol == 1 ? "on" : (Hcontrol > 1 ? "auto" : "off"));
         break;
       case 3: // average temperatur
         lcd.print("Ta=");
@@ -363,6 +376,9 @@ void loop(void) {
     if (abs(ET) > ALARM_T) {
       alarm |= 1;
       vent.write(ET < 0 ? 0 : 180);
+      if (Hcontrol > 1) {
+        Hcontrol = 2;
+      }
     } else {
       alarm &= ~1;
     }
@@ -417,7 +433,7 @@ void loop(void) {
       talarm = 0;
     }
 
-#if defined(SERIAL)
+#if defined(SERIAL_LOGGING)
     //    Serial.print("free=");    Serial.println(freeMemory());
     Serial.print("up=");
     Serial.println(t1 / 1000);
