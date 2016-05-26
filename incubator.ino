@@ -35,6 +35,9 @@
 #define HWAH 0.7 // holt winters parameters for humidity
 #define HWBH 0.5
 #define A 0.005 // long average parameter
+#define VENTCLOSED 80 // consider vent closed if under this angle
+#define VENTOPENMS  480000L // open vent if closed longer
+#define VENTRESETMS 120000L // reset vent after this time (> VENTOPENMS)
 
 SoftwareServo vent;
 //OneWire oneWire(ONE_WIRE);
@@ -144,7 +147,7 @@ float EH, dEHdt, IEHdt;
 float Tavg = NAN, Tvar;
 float Havg = NAN, Hvar;
 float Hpower, Hduty;
-unsigned long t0, Hon, talarm;
+unsigned long t0, Hon, talarm, tventclosed;
 byte c, displayMode;
 byte key, bri = 255, alarm;
 
@@ -181,6 +184,7 @@ void setup() {
   beep(1600, 100);
 }
 
+boolean ventclosed;
 
 void loop() {
   unsigned long t1 = millis();
@@ -251,8 +255,23 @@ void loop() {
     float pidH = 0.1176 * (EH + 0.09091 * IEHdt + 2.75 * dEHdt);
     //    pidH = max(0, min(1, round(pidH * 10) / 10.0)); // discretize with Hsteps step to avoid mini adjustmnts
     vent.write(pidH * 180);
+
+    boolean ventclosed0 = ventclosed;
+    ventclosed = vent.read() < VENTCLOSED;
+    if (ventclosed && ventclosed != ventclosed0) {
+      tventclosed = millis();
+    }
+
+    boolean openvent = ventclosed && millis() - tventclosed > VENTOPENMS;
+    if (openvent) {
+      vent.write(180);
+      if (millis() - tventclosed > VENTRESETMS) {
+        tventclosed = millis();
+      }
+    }
+
     if (Hcontrol > 1) {
-      if (abs(EH) > H_AUTO_THRES) {
+      if (abs(EH) > H_AUTO_THRES || openvent) {
         Hcontrol = 2;
       } else {
         if (Hcontrol < H_AUTO_COUNT) {
@@ -494,6 +513,13 @@ void loop() {
     Serial.println(vent.read());
     Serial.print("Fan=");
     Serial.println(fanrpm);
+    Serial.print("vent=");
+    Serial.println(vent.read());
+    Serial.print("vent closed=");
+    Serial.println(ventclosed);
+    Serial.print("vent closed since=");
+    Serial.println(millis() - tventclosed);
+
 
     Serial.println();
 #endif
