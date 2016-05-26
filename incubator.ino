@@ -27,9 +27,9 @@
 #define TI_RESET 1
 #define HI_RESET 5
 #define ALARM_T 2
-#define ALARM_H 10
+#define ALARM_H 8
 #define H_AUTO_THRES 3
-#define H_AUTO_COUNT 150
+#define H_AUTO_COUNT 200
 #define HWAT 0.25 // holt winters parameters for temperature
 #define HWBT 0.2
 #define HWAH 0.7 // holt winters parameters for humidity
@@ -186,11 +186,13 @@ void loop() {
   unsigned long t1 = millis();
   int dt = t1 - t0;
 
-  if (!key)
+  if (!key) {
     key = getKey();
+  }
 
-  if (key)
+  if (key) {
     analogWrite(BRIGHTNESS, bri = 255);
+  }
 
   if (t1 - Hon > Hpower * DELAY) {
     heater(0);
@@ -198,6 +200,11 @@ void loop() {
 
   if (Hcontrol && Hcontrol < H_AUTO_COUNT) {
     vent.refresh();
+  }
+
+  if (alarm && !(alarm & 8)) {
+    beep(1000, 50);
+    beep(1414, 50);
   }
 
   if (dt > DELAY || key) {
@@ -242,7 +249,7 @@ void loop() {
     if (abs(EH) > HI_RESET)
       IEHdt = 0;
     float pidH = 0.1176 * (EH + 0.09091 * IEHdt + 2.75 * dEHdt);
-//    pidH = max(0, min(1, round(pidH * 10) / 10.0)); // discretize with Hsteps step to avoid mini adjustmnts
+    //    pidH = max(0, min(1, round(pidH * 10) / 10.0)); // discretize with Hsteps step to avoid mini adjustmnts
     vent.write(pidH * 180);
     if (Hcontrol > 1) {
       if (abs(EH) > H_AUTO_THRES) {
@@ -423,10 +430,6 @@ void loop() {
         lcd.print("C H=");
         lcd.print(H, 1);
         lcd.print("%");
-        for (int i = 0; i < 3; ++i) {
-          beep(1000, 333);
-          beep(1400, 333);
-        }
       }
     } else {
       alarm = 0;
@@ -495,10 +498,13 @@ void loop() {
     Serial.println();
 #endif
 
-    if (key)
+    if (key) {
       delay(500);
-    if (bri)
+    }
+
+    if (bri) {
       analogWrite(BRIGHTNESS, --bri);
+    }
     key = 0;
     t0 = t1;
     ++c;
