@@ -62,4 +62,4 @@ The arduino monitors the fan using it's rpm signal and sets of an alarm if it fa
 
 ## Setting it up
 
-
+... to be continued ...
