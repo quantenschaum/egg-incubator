@@ -71,6 +71,7 @@ I used a 12cm 12V PC fan operated at 5V, so it runs slowly. The arduino monitors
 - some Kanthal wire as heating element
 - MOSFET as heating switch, like an [IRFZ44N](https://www.infineon.com/dgdl/irfz44n.pdf?fileId=5546d462533600a40153563b3575220b) 
 - 5V regulator like an 7805 to power the fan
+- [SG90](http://akizukidenshi.com/download/ds/towerpro/SG90.pdf) Servo to open/close the air vent, SoftwareServo library
 - 12V Powersupply (1.5A)
 - styrofoam box
 
@@ -85,3 +86,5 @@ The fan tacho signal is connected to pin 2 and it is powered with 5V from the 78
 The heating wire is powered with 12V, the MOSFET is used as switch with it's gate on pin A1.
 
 The DHT22 T/H probe has it's data pin connected on pin 3, a 10k pullup resistor might be neccessary. 
+
+The air vent servo is connected to pin 11.
