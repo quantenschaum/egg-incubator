@@ -88,3 +88,13 @@ The heating wire is powered with 12V, the MOSFET is used as switch with it's gat
 The DHT22 T/H probe has it's data pin connected on pin 3, a 10k pullup resistor might be neccessary. 
 
 The air vent servo is connected to pin 11.
+
+## How does it look like?
+
+![control unit](arduino.jpg)
+
+![air vent](air-vent.jpg)
+
+![heater and sensor](fan-heater-probe.jpg)
+
+![heater close up](heater.jpg)
