@@ -57,9 +57,31 @@ The air vent is needed also to allow fresh air and oxygen to get into the incuba
 ### Fan monitoring
 
 The fan does not need to be controlled, it is constantly running and distributes heat and humidity equally in the incubator.
-I used a 12cm 12V PC fan operated at 5V, so it runs slowly.
-The arduino monitors the fan using it's rpm signal and sets of an alarm if it fails.
+I used a 12cm 12V PC fan operated at 5V, so it runs slowly. The arduino monitors the fan using it's rpm signal and sets of an alarm if it fails.
 
 ## Setting it up
 
-... to be continued ...
+### Parts
+
+- [Arduino UNO](https://store.arduino.cc/arduino-uno-rev3)
+- [LCD shield](https://www.dfrobot.com/wiki/index.php/Arduino_LCD_KeyPad_Shield_(SKU:_DFR0009)  
+  used with [LiquidCrystal library](https://www.arduino.cc/en/Reference/LiquidCrystal)
+- DHT22 temperature and humidity probe used with DHT library
+- 12cm PC fan, operated at 5V for low speed
+- some Kanthal wire as heating element
+- MOSFET as heating switch, like an [IRFZ44N](https://www.infineon.com/dgdl/irfz44n.pdf?fileId=5546d462533600a40153563b3575220b) 
+- 5V regulator like an 7805 to power the fan
+- 12V Powersupply (1.5A)
+- styrofoam box
+
+### Wiring
+
+Have a look into the code for the pin numers, starting at line 10.
+
+The LCD uses the pins 8, 9, 4, 5, 6, 7 and 10 for the background light and A0 for the input keys.
+
+The fan tacho signal is connected to pin 2 and it is powered with 5V from the 7805 regulator.
+
+The heating wire is powered with 12V, the MOSFET is used as switch with it's gate on pin A1.
+
+The DHT22 T/H probe has it's data pin connected on pin 3, a 10k pullup resistor might be neccessary. 
