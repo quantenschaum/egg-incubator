@@ -1,10 +1,8 @@
 # Egg Incubator
 
-Is an arduino controlled incubator for chicken's eggs. It's purpose is to keep temperature and humidity at defined values, 
-so that the eggs are incubated and the chicks finally hatch after some days.
+Is an arduino controlled incubator for chicken's eggs. It's purpose is to keep temperature and humidity at defined values, so that the eggs are incubated and the chicks finally hatch after some days.
 
-It might as well be used to incubate other things that chicken's egg like other kinds eggs, 
-or cultures of bacteria i.e. to make yoghurt.
+It might as well be used to incubate other things than chicken's egg like other kinds of eggs (ducks, turtles, alligators, ...), or cultures of bacteria or fungus i.e. to make yoghurt or to leaven yeast/sour dough or to make [Tempeh](https://en.wikipedia.org/wiki/Tempeh).
 
 ## Incubation Conditions
 
@@ -18,46 +16,25 @@ Chicken's eggs are incubated for 21 days under temperature and humidity conditio
 
 Turn the eggs 3 times per day on days 3-17.
 
-The eggs are checked by "x-raying" them with a flashlight on day 7 and 15 
-(german [schieren](https://de.wikipedia.org/wiki/Schieren_(Biologie))). 
-Dead or unfertilized eggs are sorted out.
+The eggs are checked by "x-raying" them with a flashlight on day 7 and 15 (german [schieren](https://de.wikipedia.org/wiki/Schieren_(Biologie))). Dead or unfertilized eggs are sorted out.
 
 ## How it works
 
-There are several components attachted to the aruino.
-
-- temperature and humidity sensor (DHT11 or 22)
-- heating element (can be switched on and off, i.e. heating wire)
-- fan (to distibute the heat equally in the incubator)
-- servo (to open and close an air vent for control the humidity)
-- buzzer (to sound an alarm on error conditions)
-
-The arduino constantly measures temperature and humidity. The raw measurements are smoothed using 
-[Holt-Winters double exponential smoothing](https://en.wikipedia.org/wiki/Exponential_smoothing#Double_exponential_smoothing).
-The smoothed values are then fed into a [PID control loop](https://en.wikipedia.org/wiki/PID_controller).
+The arduino constantly measures temperature and humidity. The raw measurements are smoothed using [Holt-Winters double exponential smoothing](https://en.wikipedia.org/wiki/Exponential_smoothing#Double_exponential_smoothing). The smoothed values are then fed into a [PID control loop](https://en.wikipedia.org/wiki/PID_controller).
 
 ### Temperature control
 
-The temperature is maintained by turning the heating element on and off in a 2 seconds cycle. The duty cycle of the heater 
-is determined by the temperature PID loop. Using a low frequency pulse width modulation turns a two point controlled 
-heating element into a fully modulated element.
+The temperature is maintained by turning the heating element on and off in a 2 seconds cycle. The duty cycle of the heater is determined by the temperature PID loop. Using a low frequency pulse width modulation turns a [bang-bang controlled](https://en.wikipedia.org/wiki/Bang%E2%80%93bang_control) heating element into a fully modulated element.
 
-As heating element I recommed kanthal heating wire (used for styrofoam cutting). 10-15 watts are enough!
-This is much better than a light bulb. It can be operated with low voltage (saver than 220V bulb), does not emit light
-and does not burn out. Use a MOSFET to turn it on and off (no heatsink needed due to PWM and no clicking and wearing of a relay).
+As heating element I highly recommed [Kanthal](https://en.wikipedia.org/wiki/Kanthal_(alloy)) wire (used for styrofoam cutting). 10-15 watts are enough! This is much better than a light bulb. It can be operated with low voltage (saver than 220V bulb), does not emit light and does not burn out. Use a MOSFET to turn it on and off (no heatsink needed due to PWM and no clicking and wearing of a relay).
 
 ### Humidity control
 
-The humidity is maintained by opening and closing an air vent on the incubator using a servo. The servo angle is
-determined by the humidity PID loop.Inside the incubator is placed a jar filled with water.
-The water warms up and evaporates, the humidity rises, the vent is opened and the humid air can escape letting dryer in.
-The air vent is needed also to allow fresh air and oxygen to get into the incubator. You have to experiment with the size 
-(water surface) of the jar to reach the humidty setpoint and have the air vent half open.
+The humidity is maintained by opening and closing an air vent on the incubator using a servo. The servo angle is determined by the humidity PID loop. Inside the incubator is a water filled jar. The water warms up and evaporates, the humidity rises, the vent is opened and the humid air can escape letting dryer air in. The air vent is also needed also to allow fresh air and oxygen to get into the incubator. You have to experiment with the size (water surface) of the jar to reach the humidty setpoint and have the air vent (half) open.
 
 ### Fan monitoring
 
-The fan does not need to be controlled, it is constantly running and distributes heat and humidity equally in the incubator.
-I used a 12cm 12V PC fan operated at 5V, so it runs slowly. The arduino monitors the fan using it's rpm signal and sets of an alarm if it fails.
+The fan does not need to be controlled, it is constantly running and distributes heat and humidity equally in the incubator. I used a 12cm 12V PC fan operated at 5V, so it runs slowly. The Arduino monitors the fan using it's rpm signal and sets of an alarm if it fails. The fan also cools the heating wire, the heating is turned off, if the fan fails.
 
 ## Setting it up
 
@@ -66,7 +43,7 @@ I used a 12cm 12V PC fan operated at 5V, so it runs slowly. The arduino monitors
 - [Arduino UNO](https://store.arduino.cc/arduino-uno-rev3)
 - [LCD shield](https://www.dfrobot.com/wiki/index.php/Arduino_LCD_KeyPad_Shield_(SKU:_DFR0009)  
   used with [LiquidCrystal library](https://www.arduino.cc/en/Reference/LiquidCrystal)
-- DHT22 temperature and humidity probe used with DHT library
+- [DHT22](https://www.sparkfun.com/datasheets/Sensors/Temperature/DHT22.pdf) temperature and humidity probe used with DHT library
 - 12cm PC fan, operated at 5V for low speed
 - some Kanthal wire as heating element
 - MOSFET as heating switch, like an [IRFZ44N](https://www.infineon.com/dgdl/irfz44n.pdf?fileId=5546d462533600a40153563b3575220b) 
@@ -98,3 +75,7 @@ The air vent servo is connected to pin 11.
 ![heater and sensor](fan-heater-probe.jpg)
 
 ![heater close up](heater.jpg)
+
+![hatching chicks](hatching1.jpg)
+
+![hatching chicks](hatching2.jpg)
