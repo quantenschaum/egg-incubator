@@ -38,18 +38,20 @@ The fan does not need to be controlled, it is constantly running and distributes
 
 ## Usage
 
-Using the select button, you can cycle through the different mode of the display/control.
+Using the select button, you can cycle through the different modes of the display.
 
-The first line displays currently measured values or an alarm message. The second line displays information depending on the selected display mode. To silent the alarm, press any button (select).
+The first line always displays currently measured values or an alarm message. The second line displays information depending on the selected display mode. To silent the alarm, press any button (select).
 
-1. current values
+1. display current T/H values
 2. temperature setpoint, change with up/down left/right
-3. humidity setpoint, change with up/down, right changes humidity control mode, on = control air vent, off = humidity regulation and alarm turned off, auto = control air vent if humidity error greater 3%
-4. average temperatur (and standard deviation)
-5. average humidity (and standard deviation)
+3. humidity setpoint, change with up/down, right changes humidity control mode, on = control air vent, off = humidity regulation and alarm turned off, auto = control air vent if humidity error greater 3% to avoid constant noise from the servo
+4. average temperature and standard deviation
+5. average humidity and standard deviation
 6. average heater dutycycle and current heater power (0-1)
 7. air vent state (0-1) and fan speed
 8. uptime
+
+Changed values are stored permanently in the EEPROM.
 
 ## Setting it up
 
