@@ -66,6 +66,8 @@ The DHT22 T/H probe has it's data pin connected on pin 3, a 10k pullup resistor 
 
 The air vent servo is connected to pin 11.
 
+![schematic](incubator_schematic.png)
+
 ## How does it look like?
 
 ![control unit](arduino.jpg)
