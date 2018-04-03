@@ -49,6 +49,7 @@ The fan does not need to be controlled, it is constantly running and distributes
 - MOSFET as heating switch, like an [IRFZ44N](https://www.infineon.com/dgdl/irfz44n.pdf?fileId=5546d462533600a40153563b3575220b) 
 - 5V regulator like an 7805 to power the fan
 - [SG90](http://akizukidenshi.com/download/ds/towerpro/SG90.pdf) Servo to open/close the air vent, [SoftwareServo library](https://playground.arduino.cc/ComponentLib/Servo)
+- mirco buzzer
 - 12V Powersupply (1.5A)
 - styrofoam box
 
@@ -65,6 +66,8 @@ The heating wire is powered with 12V, the MOSFET is used as switch with it's gat
 The DHT22 T/H probe has it's data pin connected on pin 3, a 10k pullup resistor might be neccessary. 
 
 The air vent servo is connected to pin 11.
+
+The buzzer is connected between ground and A2.
 
 ![schematic](incubator_schematic.png)
 
