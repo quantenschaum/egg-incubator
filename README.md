@@ -70,12 +70,24 @@ The air vent servo is connected to pin 11.
 
 ![control unit](arduino.jpg)
 
+Arduino with LCD shield, below 5V regulator with heatsink and the MOSFET
+
 ![air vent](air-vent.jpg)
+
+air vent made from clear plastic, the servo turns the disk of the vent to open/close it
 
 ![heater and sensor](fan-heater-probe.jpg)
 
+fan with heating wire in the back, T/H on the left
+
 ![heater close up](heater.jpg)
+
+close up of fan with heating wire
+
+## Hatching Chicks
 
 ![hatching chicks](hatching1.jpg)
 
 ![hatching chicks](hatching2.jpg)
+
+
