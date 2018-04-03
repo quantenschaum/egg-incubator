@@ -26,7 +26,7 @@ The arduino constantly measures temperature and humidity. The raw measurements a
 
 The temperature is maintained by turning the heating element on and off in a 2 seconds cycle. The duty cycle of the heater is determined by the temperature PID loop. Using a low frequency pulse width modulation turns a [bang-bang controlled](https://en.wikipedia.org/wiki/Bang%E2%80%93bang_control) heating element into a fully modulated element.
 
-As heating element I highly recommed [Kanthal](https://en.wikipedia.org/wiki/Kanthal_(alloy)) wire (used for styrofoam cutting). 10-15 watts are enough! This is much better than a light bulb. It can be operated with low voltage (saver than 220V bulb), does not emit light and does not burn out. Use a MOSFET to turn it on and off (no heatsink needed due to PWM and no clicking and wearing of a relay).
+As heating element I highly recommed [Kanthal](https://en.wikipedia.org/wiki/Kanthal_(alloy)) wire (used for styrofoam cutting). 10-15 watts are enough! This is much better than a light bulb. It can be operated with low voltage (safer than 220V bulb), does not emit light and does not burn out. Use a MOSFET to turn it on and off (no heatsink needed due to PWM and no clicking and wearing of a relay).
 
 ### Humidity control
 
