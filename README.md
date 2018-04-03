@@ -36,6 +36,21 @@ The humidity is maintained by opening and closing an air vent on the incubator u
 
 The fan does not need to be controlled, it is constantly running and distributes heat and humidity equally in the incubator. I used a 12cm 12V PC fan operated at 5V, so it runs slowly. The Arduino monitors the fan using it's rpm signal and sets of an alarm if it fails. The fan also cools the heating wire, the heating is turned off, if the fan fails.
 
+## Usage
+
+Using the select button, you can cycle through the different mode of the display/control.
+
+The first line displays currently measured values or an alarm message. The second line displays information depending on the selected display mode. To silent the alarm, press any button (select).
+
+1. current values
+2. temperature setpoint, change with up/down left/right
+3. humidity setpoint, change with up/down, right changes humidity control mode, on = control air vent, off = humidity regulation and alarm turned off, auto = control air vent if humidity error greater 3%
+4. average temperatur (and standard deviation)
+5. average humidity (and standard deviation)
+6. average heater dutycycle and current heater power (0-1)
+7. air vent state (0-1) and fan speed
+8. uptime
+
 ## Setting it up
 
 ### Parts
