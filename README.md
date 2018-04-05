@@ -88,6 +88,24 @@ The buzzer is connected between ground and A2.
 
 ![schematic](incubator_schematic.png)
 
+### PID tuning
+
+The PID coefficients in the code are those I used in my setup. They are probably not appropiate for you setup. You have to tune them.
+
+- [HC12 tuning algorithm](http://www.iaeng.org/publication/WCECS2011/WCECS2011_pp463-468.pdf)
+- [Ziegler-Nichols](https://en.wikipedia.org/wiki/Ziegler%E2%80%93Nichols_method) 
+
+ Ziegler-Nichols does very well for this machine.
+ 
+ Set the the I and D coefficients to 0 and increase the P gain until the controlled values starts oscillating. You can monitor them using the [Adruino Plotter](https://learn.adafruit.com/experimenters-guide-for-metro/circ08-using%20the%20arduino%20serial%20plotter). 
+To this ultimate gain apply [Ziegler-Nichols](https://en.wikipedia.org/wiki/Ziegler%E2%80%93Nichols_method) formulas to get the P, I and D coefficients.
+
+### Calibration
+
+There is a `T_OFFSET` in line 11. Set it to 0 and let the system get into a stable state (standard deviation of temperature < 0.5 and decreasing). Now drop a mercury fever thermometer into the incubator and let it settle for a couple of minutes. Compare the temperatures measured by the incubator and measured by the fever thermometer and calculate the offset.
+
+Use a mercury fever thermometer because it cheap, more accurate than an electronic one and it comes calibrated because it's a medical device meant to be used on humans. Be aware the it is a maximum thermometer.
+
 ## How does it look like?
 
 ![control unit](arduino.jpg)
