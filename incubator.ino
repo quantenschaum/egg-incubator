@@ -135,12 +135,14 @@ byte Hcontrol; // H control mode
 byte Ts_changed, Hs_changed; // setpoint changed flags
 float ET, dETdt, IETdt; // prop/diff/integ terms for T
 float EH, dEHdt, IEHdt; // prop/diff/integ terms for H
-float Tavg = NAN, Tvar; // T average
-float Havg = NAN, Hvar; // average
+float T, Tavg = NAN, Tvar, Tstd;
+float H, Havg = NAN, Hvar, Hstd;
 float Hpower, Hduty; // heater current power, average duty cycle
 unsigned long t0, Hon, talarm, tventclosed;
-byte c, displayMode;
+byte displayMode;
 byte key, bri = 255, alarm;
+boolean ventclosed;
+int fanrpm;
 
 void setup() {
 #if defined(WDT_TIMEOUT)
@@ -152,7 +154,7 @@ void setup() {
   analogWrite(BRIGHTNESS, bri = 255);
   lcd.begin(16, 2);
   lcd.noCursor();
-  lcd.print("Incubator 0.6");
+  lcd.print("Incubator 0.7");
   lcd.setCursor(0, 1);
   lcd.print(__DATE__);
   dht.begin();
@@ -171,8 +173,6 @@ void setup() {
   beep(1200, 100);
   beep(1600, 100);
 }
-
-boolean ventclosed;
 
 void loop() {
   unsigned long t1 = millis();
@@ -200,100 +200,128 @@ void loop() {
   }
 
   if (dt > DELAY || key) {
-    //    beep(2000, 50);
-    float T = dht.readTemperature() + T_OFFSET;
-    float H = dht.readHumidity();
 
-    if (isnan(T) || T < 10 || T > 60 || isnan(H) || H < 5 || H > 95) {
-      heater(0);
-      lcd.clear();
-      lcd.print("SENSOR ERROR!");
-      lcd.setCursor(0, 1);
-      lcd.print("T=");
-      lcd.print(T);
-      lcd.print("C H=");
-      lcd.print(H, 1);
-      lcd.print("%");
-      beep(2000, 1000);
-      return;
-    }
+    if (!key) {
+      //    beep(2000, 50);
+      T = dht.readTemperature() + T_OFFSET;
+      H = dht.readHumidity();
 
-    float dts = dt * 1e-3;
+      if ((isnan(T) || T < 10 || T > 60) || (Hcontrol && (isnan(H) || H < 5 || H > 95))) {
+        heater(0);
+        lcd.clear();
+        lcd.print("SENSOR ERROR!");
+        lcd.setCursor(0, 1);
+        lcd.print("T=");
+        lcd.print(T);
+        lcd.print("C H=");
+        lcd.print(H, 1);
+        lcd.print("%");
+        beep(2000, 1000);
+        return;
+      }
 
-    int fanrpm = fancount * 60 / dts;
-    fancount = 0;
+      float dts = dt * 1e-3;
 
-    // temperature Holt-Winters smoothing
-    float E0 = ET;
-    ET = HWAT * (T - Ts) + (1 - HWAT) * (ET + dETdt * dts); // smoothed T error (deviation from set point)
-    dETdt = HWBT * (ET - E0) / dts + (1 - HWBT) * dETdt; // smoothed derivative
-    IETdt += ET * dts; // integral of error
-    if (abs(ET) > TI_RESET) // reset integral on big deviation
-      IETdt = 0;
-    float pidT = 1.1765 * (ET + 0.010526 * IETdt + 23.75 * dETdt); // PID value, adjust coefficients to tune
-    Hpower = fanrpm > FAN_THRES ? max(0, min(1, -pidT)) : 0;
-    heater(Hpower > 0.1);
-    Hon = millis();
+      if (dt > DELAY) {
+        fanrpm = fancount * 60 / dts;
+        fancount = 0;
+      }
 
-    // humidity Holt-Winters smoothing
-    E0 = EH;
-    EH = HWAH * (H - Hs) + (1 - HWAH) * (EH + dEHdt * dts); // smoothed H error (deviation from set point)
-    dEHdt = HWBH * (EH - E0) / dts + (1 - HWBH) * dEHdt; // smoothed derivative
-    IEHdt += EH * dts; // integral of error
-    if (abs(EH) > HI_RESET) // reset integral on big deviation
-      IEHdt = 0;
-    float pidH = 0.1176 * (EH + 0.09091 * IEHdt + 2.75 * dEHdt); // PID value, adjust coefficients to tune
-    vent.write(pidH * 180);
+      if (fanrpm < FAN_THRES) {
+        alarm |= 4;
+      } else {
+        alarm &= ~4;
+      }
 
-    boolean ventclosed0 = ventclosed;
-    ventclosed = vent.read() < VENTCLOSED;
-    if (ventclosed && ventclosed != ventclosed0) {
-      tventclosed = millis();
-    }
+      // temperature Holt-Winters smoothing
+      float E0 = ET;
+      ET = HWAT * (T - Ts) + (1 - HWAT) * (ET + dETdt * dts); // smoothed T error (deviation from set point)
+      dETdt = HWBT * (ET - E0) / dts + (1 - HWBT) * dETdt; // smoothed derivative
+      IETdt += ET * dts; // integral of error
+      if (abs(ET) > TI_RESET) // reset integral on big deviation
+        IETdt = 0;
+      float pidT = 1.1765 * (ET + 0.010526 * IETdt + 23.75 * dETdt); // PID value, adjust coefficients to tune
+      Hpower = fanrpm > FAN_THRES ? max(0, min(1, -pidT)) : 0;
+      heater(Hpower > 0.1);
+      Hon = millis();
 
-    boolean openvent = ventclosed && millis() - tventclosed > VENTOPENMS;
-    if (openvent) {
-      vent.write(180);
-      if (millis() - tventclosed > VENTRESETMS) {
+      if (abs(ET) > ALARM_T) {
+        alarm |= 1;
+        vent.write(ET < 0 ? 0 : 180);
+        if (Hcontrol > 1) {
+          Hcontrol = 2;
+        }
+      } else {
+        alarm &= ~1;
+      }
+
+      // humidity Holt-Winters smoothing
+      E0 = EH;
+      EH = HWAH * (H - Hs) + (1 - HWAH) * (EH + dEHdt * dts); // smoothed H error (deviation from set point)
+      dEHdt = HWBH * (EH - E0) / dts + (1 - HWBH) * dEHdt; // smoothed derivative
+      IEHdt += EH * dts; // integral of error
+      if (abs(EH) > HI_RESET) // reset integral on big deviation
+        IEHdt = 0;
+      float pidH = 0.1176 * (EH + 0.09091 * IEHdt + 2.75 * dEHdt); // PID value, adjust coefficients to tune
+      vent.write(pidH * 180);
+
+      if (Hcontrol && abs(EH) > ALARM_H) {
+        alarm |= 2;
+      } else {
+        alarm &= ~2;
+      }
+
+      boolean ventclosed0 = ventclosed;
+      ventclosed = vent.read() < VENTCLOSED;
+      if (ventclosed && ventclosed != ventclosed0) {
         tventclosed = millis();
       }
-    }
 
-    if (Hcontrol > 1) {
-      if (abs(EH) > H_AUTO_THRES || openvent) {
-        Hcontrol = 2;
-      } else {
-        if (Hcontrol < H_AUTO_COUNT) {
-          ++Hcontrol;
-        } else {
-          IEHdt = 0;
+      boolean openvent = ventclosed && millis() - tventclosed > VENTOPENMS;
+      if (openvent) {
+        vent.write(180);
+        if (millis() - tventclosed > VENTRESETMS) {
+          tventclosed = millis();
         }
+      }
+
+      if (Hcontrol > 1) {
+        if (abs(EH) > H_AUTO_THRES || openvent) {
+          Hcontrol = 2;
+        } else {
+          if (Hcontrol < H_AUTO_COUNT) {
+            ++Hcontrol;
+          } else {
+            IEHdt = 0;
+          }
+        }
+      }
+
+      // long term averages
+      Tavg = A * T + (1 - A) * (isnan(Tavg) ? T : Tavg);
+      Tvar = A * pow(T - Tavg, 2) + (1 - A) * (isnan(Tvar) ? 0 : Tvar);
+      Tstd = sqrt(Tvar);
+
+      Havg = A * H + (1 - A) * (isnan(Havg) ? H : Havg);
+      Hvar = A * pow(H - Havg, 2) + (1 - A) * (isnan(Hvar) ? 0 : Hvar);
+      Hstd = sqrt(Hvar);
+
+      Hduty = A * Hpower + (1 - A) * Hduty;
+
+      if (Ts_changed) {
+        if (Ts_changed-- == 1)
+          write_float(TS_ADDR, Ts);
+      }
+
+      if (Hs_changed) {
+        if (Hs_changed-- == 1)
+          write_float(HS_ADDR, Hs);
       }
     }
 
-    // long term averages
-    Tavg = A * T + (1 - A) * (isnan(Tavg) ? T : Tavg);
-    Tvar = A * pow(T - Tavg, 2) + (1 - A) * (isnan(Tvar) ? 0 : Tvar);
-    float Tstd = sqrt(Tvar);
-
-    Havg = A * H + (1 - A) * (isnan(Havg) ? H : Havg);
-    Hvar = A * pow(H - Havg, 2) + (1 - A) * (isnan(Hvar) ? 0 : Hvar);
-    float Hstd = sqrt(Hvar);
-
-    Hduty = A * Hpower + (1 - A) * Hduty;
-
-    if (Ts_changed) {
-      if (Ts_changed-- == 1)
-        write_float(TS_ADDR, Ts);
-    }
-
-    if (Hs_changed) {
-      if (Hs_changed-- == 1)
-        write_float(HS_ADDR, Hs);
-    }
-
-    if (key & SELECT)
+    if (key & SELECT) {
       displayMode = ++displayMode % 8;
+    }
 
     lcd.clear();
     lcd.print("T=");
@@ -389,28 +417,6 @@ void loop() {
       default:;
     }
 
-    if (abs(ET) > ALARM_T) {
-      alarm |= 1;
-      vent.write(ET < 0 ? 0 : 180);
-      if (Hcontrol > 1) {
-        Hcontrol = 2;
-      }
-    } else {
-      alarm &= ~1;
-    }
-
-    if (Hcontrol && abs(EH) > ALARM_H) {
-      alarm |= 2;
-    } else {
-      alarm &= ~2;
-    }
-
-    if (fanrpm < FAN_THRES) {
-      alarm |= 4;
-    } else {
-      alarm &= ~4;
-    }
-
     if (alarm & 7) {
       if (!talarm) {
         talarm = millis();
@@ -446,7 +452,7 @@ void loop() {
     }
 
     if (key) {
-      delay(500);
+      delay((key & SELECT) ? 500 : 200);
     }
 
     if (bri) {
@@ -454,7 +460,6 @@ void loop() {
     }
     key = 0;
     t0 = t1;
-    ++c;
   }
 #if defined(WDT_TIMEOUT)
   wdt_reset();
