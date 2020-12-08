@@ -8,8 +8,8 @@
 
 #define WDT_TIMEOUT WDTO_8S // if defined, enable hardware watchdog
 #define DHTPIN 3 // data pin of the DHT T/H sensor
-#define T_OFFSET 0.9 // temperature sensor offset
-#define FAN_PIN 2 // fan tacho signal pin
+#define T_OFFSET 0.0 // temperature sensor offset
+#define FAN_PIN 2 // fan speed signal pin
 #define FAN_THRES 500 // fan alarm threshold
 #define BEEPER A2 // pin where beeper is attached
 #define BRIGHTNESS 10 // display brightness pin
@@ -161,9 +161,17 @@ void setup() {
   vent.setMinimumPulse(800);
   vent.setMaximumPulse(2600);
   vent.attach(11);
-  //  write_float(TS_ADDR, Ts=37.8);  write_float(HS_ADDR, Hs=55);
+  
   Ts = read_float(TS_ADDR);
+  if(!(0<Ts && Ts<50)) {
+    write_float(TS_ADDR, Ts=37.8);
+  }
+  
   Hs = read_float(HS_ADDR);
+  if(!(0<Hs && Hs<100)) {
+    write_float(HS_ADDR, Hs=55);
+  }
+  
   Hcontrol = read_byte(HC_ADDR);
   pinMode(FAN_PIN, INPUT_PULLUP);
   attachInterrupt(0, count, FALLING);
@@ -465,6 +473,3 @@ void loop() {
   wdt_reset();
 #endif
 }
-
-
-
